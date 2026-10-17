@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ProductCard } from './ProductCard';
 import { useChaos } from '../hooks/useChaos';
 import { ArrowUpDown, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
@@ -30,19 +30,29 @@ export function ProductGrid({
   const fakeCountText = `Showing 47 of ${products.length} products`;
 
   // Feature 2: Analyze deadlock if products are 0
-  const deadlockAnalysis = products.length === 0 ? analyzeFilterDeadlock({
-    activeCategory,
-    selectedBrand,
-    selectedRating,
-    priceRange,
-    searchQuery,
-    allProducts
-  }) : null;
+  const deadlockAnalysis = useMemo(() => {
+    return products.length === 0 ? analyzeFilterDeadlock({
+      activeCategory,
+      selectedBrand,
+      selectedRating,
+      priceRange,
+      searchQuery,
+      allProducts
+    }) : null;
+  }, [products.length, activeCategory, selectedBrand, selectedRating, priceRange, searchQuery, allProducts]);
 
-  if (products.length === 0 && deadlockAnalysis) {
-    // Record trigger
-    triggerFeature("shop.restrictive-filter-empty-state", `Filter deadlock (${deadlockAnalysis.reason}): ${deadlockAnalysis.headline}`);
-  }
+  const lastDeadlockTriggerRef = useRef(null);
+  useEffect(() => {
+    if (products.length === 0 && deadlockAnalysis) {
+      const triggerKey = `${deadlockAnalysis.reason}:${deadlockAnalysis.headline}`;
+      if (lastDeadlockTriggerRef.current !== triggerKey) {
+        lastDeadlockTriggerRef.current = triggerKey;
+        triggerFeature("shop.restrictive-filter-empty-state", `Filter deadlock (${deadlockAnalysis.reason}): ${deadlockAnalysis.headline}`);
+      }
+    } else {
+      lastDeadlockTriggerRef.current = null;
+    }
+  }, [products.length, deadlockAnalysis, triggerFeature]);
 
   const handleSuggestionAction = (action, targetPrice) => {
     if (action === "clear_brand" && onClearBrand) onClearBrand();

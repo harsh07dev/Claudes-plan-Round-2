@@ -46,12 +46,11 @@ export function ShopPage({ searchQuery, selectedCategory, onSelectCategory }) {
 
     // Search query filter
     if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        p.brand.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q)
-      );
+      const tokens = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
+      list = list.filter(p => {
+        const text = `${p.name} ${p.brand} ${p.category} ${p.description || ""} ${(p.tags || []).join(" ")}`.toLowerCase();
+        return tokens.every(token => text.includes(token));
+      });
     }
 
     // Feature #10: Rating filter behaves in reverse

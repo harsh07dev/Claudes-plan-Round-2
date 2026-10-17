@@ -54,11 +54,11 @@ export function SearchBar({ onSearch, activeCategory, onSelectCategory }) {
       setIsOpen(false);
 
       // Feature 1: "Can You Even Afford That?" check
-      const matching = SAMPLE_PRODUCTS.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      const queryTokens = searchTerm.toLowerCase().split(/\s+/).filter(Boolean);
+      const matching = SAMPLE_PRODUCTS.filter(p => {
+        const text = `${p.name} ${p.brand} ${p.category} ${p.description || ""} ${(p.tags || []).join(" ")}`.toLowerCase();
+        return queryTokens.every(token => text.includes(token));
+      });
 
       if (matching.length > 0) {
         const highestPriced = [...matching].sort((a, b) => b.salePrice - a.salePrice)[0];
