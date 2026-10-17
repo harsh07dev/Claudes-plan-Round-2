@@ -859,5 +859,52 @@ export const FEATURE_REGISTRY = [
     trigger: "Click 'Reset Demo' button in header, footer, or Survival Summary",
     expected: "Cleanly resets cart, chaos level, interaction counts, and returns user to standard initial state",
     tested: true,
+  },
+
+  // CONTEXT-AWARE SHOPPING RAGEBAIT (96 - 100)
+  {
+    num: 96,
+    id: "shop.expensive-search-reaction",
+    category: "Store",
+    name: "Search Bar: 'Can You Even Afford That?'",
+    trigger: "Search for expensive matching products above ₹50,000 / $500 threshold (e.g. 'monitor', 'espresso', 'tv', 'oled')",
+    expected: "Displays witty context-aware affordability reaction based on highest matching product price without blocking results",
+    tested: true,
+  },
+  {
+    num: 97,
+    id: "shop.expensive-search-escalation",
+    category: "Store",
+    name: "Luxury Search Escalation",
+    trigger: "Repeatedly submit searches for expensive flagship items",
+    expected: "Escalates reaction from mild financial skepticism to high-roller window-shopping performance art",
+    tested: true,
+  },
+  {
+    num: 98,
+    id: "shop.restrictive-filter-empty-state",
+    category: "Store",
+    name: "Filters: 'Your Requirements Are A Problem'",
+    trigger: "Combine contradictory filters producing zero results (e.g. TerraBrew in Apparel, or KromaVision under $50)",
+    expected: "Diagnoses specific conflicting constraints and displays contextual sarcastic empty state with working recovery buttons",
+    tested: true,
+  },
+  {
+    num: 99,
+    id: "shop.repeated-product-view-reaction",
+    category: "Store",
+    name: "Repeated Visits: 'Buy It Already' (Visit #3 Milestone)",
+    trigger: "Deliberately open the Quick View modal for the same product 3 times",
+    expected: "Triggers mild, playful purchase nudge: 'You know the price. You know the specs. What\\'s the holdup?'",
+    tested: true,
+  },
+  {
+    num: 100,
+    id: "shop.product-visit-milestone-4",
+    category: "Store",
+    name: "Repeated Visits: 'Charging Hourly Rent' (Visit #4+ Milestone)",
+    trigger: "Deliberately open Quick View modal for the same product 4 or 5 times",
+    expected: "Escalates to stronger purchase humor: 'We should start charging hourly rent for this product modal'",
+    tested: true,
   }
 ];

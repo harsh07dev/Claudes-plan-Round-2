@@ -36,6 +36,11 @@ export function ChaosProvider({ children }) {
   const [checklistOpen, setChecklistOpen] = useState(false);
   const [survivalOpen, setSurvivalOpen] = useState(false);
 
+  // Context-Aware Ragebait States (Features 1, 2, 3)
+  const [expensiveSearchCount, setExpensiveSearchCount] = useState(0);
+  const [productViewCounts, setProductViewCounts] = useState({});
+  const [activeAffordabilityBanner, setActiveAffordabilityBanner] = useState(null);
+
   // Calculate chaos level when interactionCount changes
   useEffect(() => {
     const info = getChaosLevelInfo(interactionCount);
@@ -164,6 +169,9 @@ export function ChaosProvider({ children }) {
     setOsDialog(null);
     setMaintenanceOpen(false);
     setSurvivalOpen(false);
+    setExpensiveSearchCount(0);
+    setProductViewCounts({});
+    setActiveAffordabilityBanner(null);
 
     // Trigger reset notification
     addToast({
@@ -199,7 +207,13 @@ export function ChaosProvider({ children }) {
         survivalOpen,
         setSurvivalOpen,
         triggerFeature,
-        resetDemo
+        resetDemo,
+        expensiveSearchCount,
+        setExpensiveSearchCount,
+        productViewCounts,
+        setProductViewCounts,
+        activeAffordabilityBanner,
+        setActiveAffordabilityBanner
       }}
     >
       {children}

@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
-import { CATEGORIES } from '../data/products';
+import { CATEGORIES, SAMPLE_PRODUCTS } from '../data/products';
 import { useChaos } from '../hooks/useChaos';
+import { AFFORDABILITY_CONFIG, getAffordabilityReaction } from '../chaos/contextualReactions';
 
 const AUTOCOMPLETE_ITEMS = [
   "wireless noise cancelling headphones",
@@ -15,7 +16,14 @@ const AUTOCOMPLETE_ITEMS = [
 ];
 
 export function SearchBar({ onSearch, activeCategory, onSelectCategory }) {
-  const { triggerFeature, addToast, chaosLevel } = useChaos();
+  const {
+    triggerFeature,
+    addToast,
+    chaosLevel,
+    expensiveSearchCount,
+    setExpensiveSearchCount,
+    setActiveAffordabilityBanner
+  } = useChaos();
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -44,6 +52,38 @@ export function SearchBar({ onSearch, activeCategory, onSelectCategory }) {
     setTimeout(() => {
       setLoading(false);
       setIsOpen(false);
+
+      // Feature 1: "Can You Even Afford That?" check
+      const matching = SAMPLE_PRODUCTS.filter(p =>
+        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.category.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+      if (matching.length > 0) {
+        const highestPriced = [...matching].sort((a, b) => b.salePrice - a.salePrice)[0];
+        if (highestPriced.salePrice >= AFFORDABILITY_CONFIG.priceThreshold) {
+          const newCount = expensiveSearchCount + 1;
+          setExpensiveSearchCount(newCount);
+
+          triggerFeature("shop.expensive-search-reaction", `Searched high-ticket item '${highestPriced.name}' ($${highestPriced.salePrice})`);
+          if (newCount > 1) {
+            triggerFeature("shop.expensive-search-escalation", `Escalation level ${newCount} for repeated luxury queries`);
+          }
+
+          const reaction = getAffordabilityReaction(highestPriced, newCount);
+          setActiveAffordabilityBanner(reaction);
+          addToast({
+            title: reaction.badgeText,
+            message: reaction.quote,
+            type: "warning"
+          });
+        } else {
+          setActiveAffordabilityBanner(null);
+        }
+      } else {
+        setActiveAffordabilityBanner(null);
+      }
 
       // Feature #1: Search returns an unexpected category
       let categoryOverride = null;

@@ -45,7 +45,7 @@ export function FeatureChecklistDrawer() {
             <div>
               <h3 className="text-sm font-bold leading-tight">Feature Registry & Test Matrix</h3>
               <span className="text-[11px] text-slate-400">
-                {totalTriggeredCount} of 95 distinct ragebait systems triggered
+                {totalTriggeredCount} of {FEATURE_REGISTRY.length} distinct ragebait systems triggered
               </span>
             </div>
           </div>
@@ -71,23 +71,25 @@ export function FeatureChecklistDrawer() {
           </div>
 
           <div className="flex gap-1.5 overflow-x-auto text-xs">
-            {["All", "Store", "Checkout", "Shared"].map(cat => (
-              <button
-                key={cat}
-                onClick={() => setFilterCategory(cat)}
-                className={`px-3 py-1 rounded text-xs font-semibold whitespace-nowrap transition-colors ${
-                  filterCategory === cat
-                    ? 'bg-navy text-white'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {cat} ({
-                  cat === "All" ? 95 :
-                  cat === "Store" ? 40 :
-                  cat === "Checkout" ? 40 : 15
-                })
-              </button>
-            ))}
+            {["All", "Store", "Checkout", "Shared"].map(cat => {
+              const catCount = cat === "All"
+                ? FEATURE_REGISTRY.length
+                : FEATURE_REGISTRY.filter(f => f.category === cat).length;
+
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setFilterCategory(cat)}
+                  className={`px-3 py-1 rounded text-xs font-semibold whitespace-nowrap transition-colors ${
+                    filterCategory === cat
+                      ? 'bg-navy text-white'
+                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {cat} ({catCount})
+                </button>
+              );
+            })}
           </div>
         </div>
 

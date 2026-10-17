@@ -10,8 +10,19 @@ import { formatPrice } from '../utils/pricing';
 import { Eye, X, ArrowRight, Layers, Sparkles } from 'lucide-react';
 
 export function ShopPage({ searchQuery, selectedCategory, onSelectCategory }) {
-  const { compareList, toggleCompare, recentViews, addToCart } = useCart();
-  const { triggerFeature, chaosLevel, perturbations } = useChaos();
+  const {
+    compareList,
+    toggleCompare,
+    recentViews,
+    addToCart
+  } = useCart();
+  const {
+    triggerFeature,
+    chaosLevel,
+    perturbations,
+    activeAffordabilityBanner,
+    setActiveAffordabilityBanner
+  } = useChaos();
 
   // Local filter states
   const [selectedBrand, setSelectedBrand] = useState("");
@@ -85,7 +96,7 @@ export function ShopPage({ searchQuery, selectedCategory, onSelectCategory }) {
 
   // Clear filters (#7)
   const handleClearFilters = (stubbornBrand) => {
-    setSelectedBrand(stubbornBrand); // leaves brand active!
+    setSelectedBrand(stubbornBrand); // leaves brand active if specified!
     setSelectedRating(0);
     setPriceRange([20, 1200]);
     onSelectCategory("All Categories");
@@ -108,6 +119,37 @@ export function ShopPage({ searchQuery, selectedCategory, onSelectCategory }) {
     <div className="max-w-7xl mx-auto px-4 py-6">
       {/* Promotional Top Banner (#26, #28) */}
       <PromoBanner onSelectCategory={onSelectCategory} />
+
+      {/* Feature 1: "Can You Even Afford That?" Sarcastic Search Reaction Banner */}
+      {activeAffordabilityBanner && (
+        <div className="mb-4 bg-amber-50/90 border border-amber-200 rounded-lg p-3 sm:p-4 flex items-start justify-between gap-3 text-left shadow-xs animate-in slide-in-from-top-2">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-amber-100 text-amber-800 rounded-md flex-shrink-0 mt-0.5">
+              <Sparkles className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-200 text-amber-900 px-2 py-0.5 rounded">
+                  {activeAffordabilityBanner.badgeText}
+                </span>
+                <span className="text-xs font-semibold text-slate-700">
+                  Target Price Reference: {activeAffordabilityBanner.productName} ({activeAffordabilityBanner.priceFormatted})
+                </span>
+              </div>
+              <p className="text-xs sm:text-sm font-semibold text-amber-950 mt-1 italic leading-snug">
+                "{activeAffordabilityBanner.quote}"
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setActiveAffordabilityBanner(null)}
+            className="text-slate-400 hover:text-slate-700 p-1 rounded hover:bg-amber-100 transition-colors"
+            title="Dismiss affordability advisory"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Main Content Layout: Sidebar + Product Grid */}
       <div className="flex flex-col md:flex-row gap-6">
@@ -133,6 +175,18 @@ export function ShopPage({ searchQuery, selectedCategory, onSelectCategory }) {
             setCurrentPage(pg);
             setRepeatPageOne(repeat);
           }}
+          activeCategory={selectedCategory}
+          selectedBrand={selectedBrand}
+          selectedRating={selectedRating}
+          priceRange={priceRange}
+          searchQuery={searchQuery}
+          allProducts={SAMPLE_PRODUCTS}
+          onClearBrand={() => setSelectedBrand("")}
+          onClearRating={() => setSelectedRating(0)}
+          onResetPrice={() => setPriceRange([20, 1200])}
+          onClearCategory={() => onSelectCategory("All Categories")}
+          onClearAllFilters={() => handleClearFilters("")}
+          onRaiseBudget={(target) => setPriceRange([20, target])}
         />
       </div>
 

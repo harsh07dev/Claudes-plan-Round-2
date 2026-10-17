@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ProductCard } from './ProductCard';
 import { useChaos } from '../hooks/useChaos';
 import { ArrowUpDown, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
+import { analyzeFilterDeadlock } from '../chaos/contextualReactions';
 
 export function ProductGrid({
   products,
@@ -9,12 +10,48 @@ export function ProductGrid({
   sortOption,
   onSortChange,
   currentPage,
-  onPageChange
+  onPageChange,
+  activeCategory,
+  selectedBrand,
+  selectedRating,
+  priceRange,
+  searchQuery,
+  allProducts = [],
+  onClearBrand,
+  onClearRating,
+  onResetPrice,
+  onClearCategory,
+  onClearAllFilters,
+  onRaiseBudget
 }) {
   const { triggerFeature, addToast } = useChaos();
 
   // Feature #4: Result count disagrees with the grid
   const fakeCountText = `Showing 47 of ${products.length} products`;
+
+  // Feature 2: Analyze deadlock if products are 0
+  const deadlockAnalysis = products.length === 0 ? analyzeFilterDeadlock({
+    activeCategory,
+    selectedBrand,
+    selectedRating,
+    priceRange,
+    searchQuery,
+    allProducts
+  }) : null;
+
+  if (products.length === 0 && deadlockAnalysis) {
+    // Record trigger
+    triggerFeature("shop.restrictive-filter-empty-state", `Filter deadlock (${deadlockAnalysis.reason}): ${deadlockAnalysis.headline}`);
+  }
+
+  const handleSuggestionAction = (action, targetPrice) => {
+    if (action === "clear_brand" && onClearBrand) onClearBrand();
+    else if (action === "clear_rating" && onClearRating) onClearRating();
+    else if (action === "reset_price" && onResetPrice) onResetPrice();
+    else if (action === "clear_category" && onClearCategory) onClearCategory();
+    else if (action === "raise_budget_target" && onRaiseBudget) onRaiseBudget(targetPrice || 600);
+    else if (action === "clear_all" && onClearAllFilters) onClearAllFilters();
+  };
 
   const handleSortSelect = (e) => {
     const val = e.target.value;
@@ -97,12 +134,72 @@ export function ProductGrid({
         </div>
       </div>
 
-      {/* Product Grid */}
-      {products.length === 0 ? (
-        <div className="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500">
-          <Layers className="w-12 h-12 mx-auto text-slate-300 mb-2" />
-          <h4 className="text-sm font-bold text-slate-700">No products matched the quantum filter matrix</h4>
-          <p className="text-xs text-slate-400 mt-1">Try resetting filters or adjusting search parameters</p>
+      {/* Product Grid or Sarcastic Contextual Empty State (#98) */}
+      {products.length === 0 && deadlockAnalysis ? (
+        <div className="bg-white border border-slate-200 rounded-xl p-8 sm:p-10 text-left shadow-card space-y-5 animate-in fade-in">
+          <div className="flex items-start gap-3.5">
+            <div className="p-3 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl flex-shrink-0">
+              <Layers className="w-6 h-6" />
+            </div>
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded">
+                Constraint Deadlock Detected
+              </span>
+              <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                {deadlockAnalysis.headline}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-xl">
+                {deadlockAnalysis.description}
+              </p>
+            </div>
+          </div>
+
+          {/* Active Constraints Summary */}
+          <div className="bg-slate-50 border border-slate-200 rounded-lg p-3.5 space-y-2 text-xs">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+              Culprit Constraints Under Review
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {activeCategory && activeCategory !== "All Categories" && (
+                <span className="inline-flex items-center gap-1 bg-white border border-slate-300 px-2.5 py-1 rounded text-slate-700 font-medium">
+                  Category: {activeCategory}
+                </span>
+              )}
+              {selectedBrand && (
+                <span className="inline-flex items-center gap-1 bg-white border border-slate-300 px-2.5 py-1 rounded text-slate-700 font-medium">
+                  Brand: {selectedBrand}
+                </span>
+              )}
+              {selectedRating > 0 && (
+                <span className="inline-flex items-center gap-1 bg-white border border-slate-300 px-2.5 py-1 rounded text-slate-700 font-medium">
+                  Rating: {selectedRating}+ Stars
+                </span>
+              )}
+              {priceRange && (
+                <span className="inline-flex items-center gap-1 bg-white border border-slate-300 px-2.5 py-1 rounded text-slate-700 font-medium">
+                  Budget: ${priceRange[0]} - ${priceRange[1]}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Functional Remediation Suggestions */}
+          <div className="space-y-2 pt-1">
+            <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+              Suggested Diplomatic Remedies
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {deadlockAnalysis.suggestions.map((sug, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSuggestionAction(sug.action, sug.targetPrice)}
+                  className="bg-navy hover:bg-navy-hover text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
+                >
+                  <span>{sug.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">

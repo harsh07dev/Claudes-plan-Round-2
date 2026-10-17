@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { X, Star, ShoppingCart, Heart, ShieldCheck, Truck, ChevronLeft, ChevronRight, AlertTriangle, Gift } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Star, ShoppingCart, Heart, ShieldCheck, Truck, ChevronLeft, ChevronRight, AlertTriangle, Gift, Sparkles } from 'lucide-react';
 import { ProductGallery } from './ProductGallery';
 import { useCart } from '../hooks/useCart';
 import { useChaos } from '../hooks/useChaos';
+import { useProductViews } from '../hooks/useProductViews';
 import { formatPrice } from '../utils/pricing';
 import { SAMPLE_PRODUCTS } from '../data/products';
 
@@ -11,6 +12,21 @@ export function ProductQuickView({ product, onClose }) {
 
   const { addToCart, wishlist, toggleWishlist } = useCart();
   const { triggerFeature, addToast } = useChaos();
+  const { recordProductView } = useProductViews();
+
+  // Feature 3: Track deliberate product visits
+  const [visitReaction, setVisitReaction] = useState(null);
+  const recordedRef = useRef(false);
+
+  useEffect(() => {
+    if (product && product.id && !recordedRef.current) {
+      recordedRef.current = true;
+      const reaction = recordProductView(product);
+      if (reaction) {
+        setVisitReaction(reaction);
+      }
+    }
+  }, [product, recordProductView]);
 
   // Feature #16: Variant selection highlights wrong variant
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
@@ -123,6 +139,49 @@ export function ProductQuickView({ product, onClose }) {
           {/* Right: Details & Controls */}
           <div className="flex flex-col justify-between">
             <div>
+              {/* Feature 3: Repeated Visit Milestone Banner */}
+              {visitReaction && (
+                <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start justify-between gap-2.5 text-left animate-in slide-in-from-top-2">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-bold uppercase tracking-wider bg-navy text-white px-1.5 py-0.5 rounded">
+                        {visitReaction.badge}
+                      </span>
+                      <h4 className="text-xs font-bold text-slate-900">
+                        {visitReaction.headline}
+                      </h4>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-snug">
+                      {visitReaction.message}
+                    </p>
+                    <div className="pt-1 flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          addToCart(product, quantity, product.variants ? product.variants[selectedVariantIndex] : null);
+                          onClose();
+                        }}
+                        className="text-[11px] font-bold bg-navy hover:bg-navy-hover text-white px-2.5 py-1 rounded shadow-xs transition-colors"
+                      >
+                        {visitReaction.ctaText}
+                      </button>
+                      <button
+                        onClick={() => setVisitReaction(null)}
+                        className="text-[11px] text-slate-500 hover:text-slate-800"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setVisitReaction(null)}
+                    className="text-slate-400 hover:text-slate-700 p-0.5 rounded"
+                    title="Dismiss reminder"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
               <h2 className="text-xl font-bold text-slate-900 leading-snug mb-2">
                 {product.name}
               </h2>
